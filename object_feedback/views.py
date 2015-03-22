@@ -1,11 +1,14 @@
-from django import forms
+# coding: utf-8
+
+# django
 from django.views.generic import View
 from django.utils.translation import ugettext as _
 from django.http import Http404
 from django.template import RequestContext
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render_to_response
 from django.contrib.contenttypes.models import ContentType
 
+# app
 from .forms import ObjectFeedbackForm, ObjectFeedbackFieldsForm
 from .models import ObjectFeedback
 from .mixins import ObjectFeedbackMixin

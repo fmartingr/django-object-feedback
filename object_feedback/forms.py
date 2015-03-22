@@ -1,6 +1,10 @@
-from django import forms
-from .models import ObjectFeedback
+# coding: utf-8
 
+# django
+from django import forms
+
+# app
+from .models import ObjectFeedback
 
 
 class ObjectFeedbackModelForm(forms.ModelForm):
@@ -31,10 +35,13 @@ class ObjectFeedbackModelForm(forms.ModelForm):
         # Not needed
         raise Exception("save() method is not needed on this")
 
+
 class ObjectFeedbackFieldsForm(object):
     def __new__(self, obj, fields, data=None):
         meta = type('Meta', (), {"model": obj, "fields": fields})
-        form_class = type('modelform', (ObjectFeedbackModelForm, ), {"Meta": meta})
+        form_class = type('modelform',
+                          (ObjectFeedbackModelForm,),
+                          {"Meta": meta})
         return form_class(data, instance=obj)
 
 

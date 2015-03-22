@@ -1,8 +1,13 @@
+# coding: utf-8
+
+# django
 from django.db import models
 from django.db import transaction
 from django.core.urlresolvers import reverse
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
+
+# app
 from .models import ObjectFeedback
 
 

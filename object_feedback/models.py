@@ -1,3 +1,6 @@
+# coding: utf-8
+
+# django
 from django.db import models
 from django.conf import settings
 from django.contrib.contenttypes import generic
@@ -79,6 +82,7 @@ class ObjectAttributeFeedback(models.Model):
     def value_field_name(self):
         try:
             field = 'value_{}'.format(self._field_mappings[self.field_type])
+            return field
         except IndexError:
             raise Exception('{} are not supported at the moment'.format(
                 self.field_type))

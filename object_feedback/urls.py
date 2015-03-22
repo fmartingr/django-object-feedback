@@ -1,5 +1,9 @@
+# coding: utf-8
+
+# django
 from django.conf.urls import patterns, url
 
+# app
 from .views import ObjectFeedbackView, FeedbackView
 
 urlpatterns = patterns(
@@ -10,5 +14,4 @@ urlpatterns = patterns(
     url(r'^$',
         FeedbackView.as_view(),
         name="general"),
-
 )
