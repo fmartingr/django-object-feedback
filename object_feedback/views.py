@@ -53,7 +53,8 @@ class BaseFeedbackView(View):
             context['object'] = obj
 
             # Get the fields form for the object to add a feedback
-            object_form = ObjectFeedbackFieldsForm(obj, obj.feedback_fields)
+            object_form = ObjectFeedbackFieldsForm(obj,
+                                                   obj.get_feedback_fields())
             context['object_form'] = object_form
 
         # Create a base feedback form
@@ -67,7 +68,7 @@ class BaseFeedbackView(View):
         POST
         """
         template = self.template
-        context = { 'errors': [] }
+        context = {'errors': []}
         error = True
         fields = ()
 
@@ -76,7 +77,7 @@ class BaseFeedbackView(View):
             context['object'] = obj
 
             object_form = ObjectFeedbackFieldsForm(obj,
-                                                   obj.feedback_fields,
+                                                   obj.get_feedback_fields(),
                                                    data=request.POST)
 
             feedback_form = ObjectFeedbackForm(

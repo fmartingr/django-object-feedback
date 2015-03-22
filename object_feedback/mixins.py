@@ -30,7 +30,7 @@ class ObjectFeedbackMixin(models.Model):
         # Add fields for feedback check
         for key, value in fields:
             # Check if the field is allowed to receive feedback
-            if key in self.feedback_fields:
+            if key in self.get_feedback_fields():
                 field_type = self._meta.get_field(key).get_internal_type()
                 obj_feedback.add_field(key, value, field_type)
 

@@ -1,6 +1,9 @@
 django-object-feedback
 ======================
 
+[![Build Status](https://drone.io/github.com/fmartingr/django-object-feedback/status.png)](https://drone.io/github.com/fmartingr/django-object-feedback/latest) [![Dependency Status](https://gemnasium.com/fmartingr/django-object-feedback.svg)](https://gemnasium.com/fmartingr/django-object-feedback)
+
+
 A simple django app to allow feedback on model instances.
 
 NOTE: ** Still work in progress **
@@ -49,8 +52,9 @@ from object_feedback.mixins import ObjectFeedbackMixin
 
 class Series(ObjectFeedbackMixin, models.Model):
 	# model fields and stuff...
-    feedback_fields = ('name', 'summary', )
 	# model methods and overrides and stuff...
+	def get_feedback_fields(self):
+		return ('name', 'summary', )
 ```
 
 ### Using django-object-feedback default views
