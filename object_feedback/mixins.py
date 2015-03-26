@@ -24,8 +24,8 @@ class ObjectFeedbackMixin(models.Model):
             fields: A tuple of fields as ('<key>', '<value>')
         """
         # Create feedback object
-        obj_feedback = ObjectFeedback(author=author, content_object=self)
-        obj_feedback.save()
+        obj_feedback = ObjectFeedback(
+            author=author, content_object=self, comment=comment)
 
         # Add fields for feedback check
         for key, value in fields:
@@ -33,6 +33,8 @@ class ObjectFeedbackMixin(models.Model):
             if key in self.get_feedback_fields():
                 field_type = self._meta.get_field(key).get_internal_type()
                 obj_feedback.add_field(key, value, field_type)
+
+        obj_feedback.save()
 
         return obj_feedback
 
