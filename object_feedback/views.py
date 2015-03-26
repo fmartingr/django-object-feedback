@@ -107,8 +107,8 @@ class BaseFeedbackView(View):
             context['feedback_form'] = feedback_form
             context['object_form'] = object_form
 
-            ctx = RequestContext(request, context)
-            return render_to_response(template, context_instance=ctx)
+        ctx = RequestContext(request, context)
+        return render_to_response(template, context_instance=ctx)
 
 
 class ObjectFeedbackView(BaseFeedbackView):
