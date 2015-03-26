@@ -24,8 +24,9 @@ class BaseFeedbackView(View):
 
     # Dual form errors
     form_errors = {
-        'fill_something': _('You need to enter a comment for this feedback or '
-                            'provide some modifications in order to send it.')
+        'fill_something': _('You need to either enter a comment for this '
+                            'feedback or provide some modifications in order '
+                            'to submit it.')
     }
 
     def get_feedback_instance(self, request, obj=None):
