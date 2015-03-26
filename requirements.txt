@@ -1,1 +1,2 @@
 django>=1.6
+-e hg+https://fmartingr@bitbucket.org/schinckel/django-jsonfield#egg=jsonfield
