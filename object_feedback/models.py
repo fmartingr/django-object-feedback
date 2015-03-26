@@ -1,11 +1,17 @@
 # coding: utf-8
 
+# python
+import copy
+
 # django
 from django.db import models
 from django.conf import settings
 from django.contrib.contenttypes import generic
 from django.utils.translation import ugettext_lazy as _, ugettext
 from django.contrib.contenttypes.models import ContentType
+
+# 3rd party
+import jsonfield
 
 
 class ObjectFeedback(models.Model):
@@ -15,6 +21,8 @@ class ObjectFeedback(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     content_object = generic.GenericForeignKey('content_type', 'object_id')
+
+    changed_fields = jsonfield.JSONField()
 
     # Author
     author = models.ForeignKey(settings.AUTH_USER_MODEL,
@@ -29,15 +37,45 @@ class ObjectFeedback(models.Model):
     reviewed = models.DateTimeField(null=True, blank=True)
     valid = models.NullBooleanField(default=None)
 
+    def get_actual_value_from_key(self, key):
+        return getattr(self.object, key, None)
+
+    def set_changed_field(self, key, value):
+        self.changed_fields[key] = value
+        print('set')
+        print(self.changed_fields)
+
     def add_field(self, key, value, field_type):
         """
-        NOTE: Must always be called from obj.add_feedback()
+        Adds the desired field to the current feedback instance
+        The method will check if the field has changed, if not, it wont
+        save the field within the feedback.
+        If the field is a special field (like a relation) a custom method
+        is called to interact with those.
+        Currently supported fields: TODO
         """
-        attribute = ObjectAttributeFeedback(
-            feedback=self, field_type=field_type, field=key, value=value)
-        attribute.save()
 
-        return attribute
+        if getattr(self, 'add_field_{}'.format(field_type.lower()), None):
+            method = getattr(self, 'add_field_{}'.format(field_type.lower()))
+            method(key, value)
+        elif self.get_actual_value_from_key(key) != value:
+            self.set_changed_field(key, value)
+
+    def add_field_manytomanyfield(self, key, qs):
+        val = self.get_actual_value_from_key(key)
+        if (
+            set(val.values_list('id',
+                                flat=True)) != set(qs.values_list('id',
+                                                                  flat=True))
+        ):
+            value = list(qs.values_list('id', flat=True))
+            self.set_changed_field(key, value)
+
+    def add_field_foreignkey(self, key, obj):
+        val = self.get_actual_value_from_key(key)
+        if val.pk != obj.pk:
+            value = obj.pk
+            self.set_changed_field(key, value)
 
     def __unicode__(self):
         return '{}: {} - {}'.format(
@@ -50,49 +88,3 @@ class ObjectFeedback(models.Model):
     class Meta:
         verbose_name = _('Object feedback')
         verbose_name_plural = _('Object feedbacks')
-
-
-class ObjectAttributeFeedback(models.Model):
-    """
-    """
-    _base_params = {'blank': True, 'null': True}
-    _field_mappings = {
-        'CharField': 'text',
-        'TextField': 'text',
-        'URLField': 'text',
-        'SlugField': 'slug',
-        'DateField': 'date',
-        'DateTimeField': 'datetime',
-        'BooleanField': 'boolean',
-        'NullBooleanField': 'nullboolean',
-    }
-
-    feedback = models.ForeignKey(ObjectFeedback, related_name='fields')
-    field = models.CharField(max_length=64)
-    field_type = models.CharField(max_length=20)
-
-    value_text = models.TextField(**_base_params)
-    value_date = models.DateField(**_base_params)
-    value_datetime = models.DateTimeField(**_base_params)
-    value_boolean = models.BooleanField(blank=True, default=False)
-    value_nullboolean = models.NullBooleanField(**_base_params)
-    value_slug = models.SlugField(**_base_params)
-
-    @property
-    def value_field_name(self):
-        try:
-            field = 'value_{}'.format(self._field_mappings[self.field_type])
-            return field
-        except IndexError:
-            raise Exception('{} are not supported at the moment'.format(
-                self.field_type))
-
-    @property
-    def value(self):
-        value_field = self.value_field_name
-        return getattr(self, value_field, None)
-
-    @value.setter
-    def value(self, value):
-        value_field = self.value_field_name
-        setattr(self, value_field, value)
