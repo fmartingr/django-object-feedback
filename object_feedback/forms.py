@@ -1,5 +1,8 @@
 # coding: utf-8
 
+# python
+import copy
+
 # django
 from django import forms
 
@@ -12,16 +15,18 @@ class ObjectFeedbackModelForm(forms.ModelForm):
         super(ObjectFeedbackModelForm, self).__init__(*args, **kwargs)
         self._original = self.instance
         self._fields_changed = []
-
-    def has_changed(self, field, value):
-        return getattr(self._original, field) != value
+        self._object_feedback = ObjectFeedback()
+        self._object_feedback.content_object = copy.copy(self._original)
 
     def is_valid(self, *args, **kwargs):
         result = super(ObjectFeedbackModelForm, self).is_valid(*args, **kwargs)
 
         if result:
             for key, value in self.cleaned_data.iteritems():
-                if self.has_changed(key, value):
+                field_type = self._original._meta.get_field(
+                    key).get_internal_type()
+                self._object_feedback.add_field(key, value, field_type)
+                if key in self._object_feedback.changed_fields:
                     self._fields_changed.append((key, value))
 
             return len(self._fields_changed) > 0
