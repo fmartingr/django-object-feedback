@@ -32,9 +32,14 @@ class BaseFeedbackView(View):
     def get_feedback_instance(self, request, obj=None):
         """
         """
-        instance = ObjectFeedback(author=request.user)
+        instance = ObjectFeedback()
+
+        if request.user.is_authenticated():
+            instance.author = request.user
+
         if obj:
             instance.content_object = obj
+
         return instance
 
     def get(self, request, *args, **kwargs):
@@ -94,11 +99,14 @@ class BaseFeedbackView(View):
 
             if fields or feedback_object.comment:
                 error = False
-                obj.add_feedback(
-                    author=request.user,
-                    comment=feedback_object.comment,
-                    fields=fields
-                )
+                feedback_kwargs = {
+                    'comment': feedback_object.comment,
+                    'fields': fields,
+                }
+                # TODO allow only auth users?
+                if request.user.is_authenticated():
+                    feedback_kwargs['author'] = request.user
+                obj.add_feedback(**feedback_kwargs)
 
                 template = self.thanks_template
             else:

@@ -8,10 +8,14 @@ from django.db import models
 from django.conf import settings
 from django.contrib.contenttypes import generic
 from django.utils.translation import ugettext_lazy as _, ugettext
+from django.utils.timezone import now
 from django.contrib.contenttypes.models import ContentType
 
 # 3rd party
 import jsonfield
+
+# app
+from .fields import fields_map
 
 
 class ObjectFeedback(models.Model):
@@ -26,7 +30,8 @@ class ObjectFeedback(models.Model):
 
     # Author
     author = models.ForeignKey(settings.AUTH_USER_MODEL,
-                               related_name="feedback_sent")
+                               related_name="feedback_sent",
+                               blank=True, null=True)
 
     # Dates
     submitted = models.DateTimeField(auto_now_add=True)
@@ -37,13 +42,8 @@ class ObjectFeedback(models.Model):
     reviewed = models.DateTimeField(null=True, blank=True)
     valid = models.NullBooleanField(default=None)
 
-    def get_actual_value_from_key(self, key):
-        return getattr(self.object, key, None)
-
     def set_changed_field(self, key, value):
         self.changed_fields[key] = value
-        print('set')
-        print(self.changed_fields)
 
     def add_field(self, key, value, field_type):
         """
@@ -55,31 +55,38 @@ class ObjectFeedback(models.Model):
         Currently supported fields: TODO
         """
 
-        if getattr(self, 'add_field_{}'.format(field_type.lower()), None):
-            method = getattr(self, 'add_field_{}'.format(field_type.lower()))
-            method(key, value)
-        elif self.get_actual_value_from_key(key) != value:
+        if field_type in fields_map:
+            field = fields_map[field_type](self.object, key, value)
+        else:
+            raise Exception('{}: Not implemented'.format(field_type))
+
+        if field.has_changed():
             self.set_changed_field(key, value)
 
-    def add_field_manytomanyfield(self, key, qs):
-        val = self.get_actual_value_from_key(key)
-        if (
-            set(val.values_list('id',
-                                flat=True)) != set(qs.values_list('id',
-                                                                  flat=True))
-        ):
-            value = list(qs.values_list('id', flat=True))
-            self.set_changed_field(key, value)
+    def mark_as_valid(self, fields=()):
+        """
+        Mark this feedback as valid and change the fields in the content_object
+        with the provided in this feedback
+        """
+        # TODO selective fields
+        # TODO change fields
+        if not self.reviewed:
+            self.valid = True
+            self.reviewed = now()
+            self.save()
 
-    def add_field_foreignkey(self, key, obj):
-        val = self.get_actual_value_from_key(key)
-        if val.pk != obj.pk:
-            value = obj.pk
-            self.set_changed_field(key, value)
+    def mark_as_invalid(self):
+        """
+        Mark this feedback as not valid and reviewed.
+        """
+        if not self.reviewed:
+            self.valid = False
+            self.reviewed = now()
+            self.save()
 
     def __unicode__(self):
-        return '{}: {} - {}'.format(
-            ugettext('User feedback'), self.content_type, self.content_object)
+        return u'{}: {} - {}'.format(
+            _('User feedback'), self.content_type, self.content_object)
 
     @property
     def object(self):

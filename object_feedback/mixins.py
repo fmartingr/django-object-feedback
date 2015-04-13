@@ -15,7 +15,7 @@ class ObjectFeedbackMixin(models.Model):
     feedbacks = generic.GenericRelation(ObjectFeedback)
 
     @transaction.atomic
-    def add_feedback(self, author, comment=None, fields=()):
+    def add_feedback(self, author=None, comment=None, fields=()):
         """
         Adds a feedback to the current object.
 
