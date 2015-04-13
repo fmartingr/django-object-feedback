@@ -2,8 +2,6 @@
 
 # django
 from django.contrib import admin
-from django.conf.urls import url
-from django.template.response import TemplateResponse
 
 # app
 from .models import ObjectFeedback
@@ -29,25 +27,6 @@ class FeedbackAdmin(admin.ModelAdmin):
 
     list_display = ('submitted', 'content_object', 'valid', 'reviewed', )
 
-    def get_urls(self):
-        urls = super(FeedbackAdmin, self).get_urls()
-        my_urls = [
-            url(r'^2(?P<pk>\d+)/$',
-                self.admin_site.admin_view(self.review_view))
-        ]
-        return my_urls + urls
-
-    def review_view(self, request, pk):
-        obj = self.model.objects.get(pk=pk)
-        context = dict(
-            self.admin_site.each_context(),
-            object=obj,
-        )
-        return TemplateResponse(
-            request,
-            self.review_template,
-            context)
-
     def has_add_permission(self, request):
         """
         Not adding feedback from admin.
@@ -55,13 +34,20 @@ class FeedbackAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        """
+        Feedback is not deleted, is marked as invalid.
+        """
         return False
 
     def get_actions(self, request):
+        """
+        Removing default delete action from list.
+        WHY U NOT DO THIS WITH self.has_delete_permission() ??!
+        """
         actions = super(FeedbackAdmin, self).get_actions(request)
 
         # Remove delete action
-        if 'delete_selected' in actions:
+        if not self.has_delete_permission(request):
             del actions['delete_selected']
 
         return actions
